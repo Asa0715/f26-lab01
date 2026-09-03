@@ -1,6 +1,7 @@
 package edu.cmu.cs214.booking.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import edu.cmu.cs214.booking.domain.Booking;
@@ -74,5 +75,21 @@ class BookingServiceTest {
         assertEquals(1, bookings.size());
         assertEquals(bob, bookings.get(0).user());
         assertEquals(new TimeInterval(630, 700), bookings.get(0).interval());
+    }
+
+    @Test
+    /*
+    The generated isAvailable implementation only checked
+    whether the start of an existing booking fell inside the requested interval.
+    It missed overlaps where the existing booking starts earlier and
+    extends into the requested interval.
+     */
+    void unavailableWhenExistingBookingStartsBeforeRequestedInterval() {
+        BookingService svc = newService();
+        svc.book(roomA, alice, new TimeInterval(600, 660));
+
+        boolean available = svc.isAvailable(roomA, new TimeInterval(630, 660));
+
+        assertFalse(available);
     }
 }
