@@ -3,10 +3,12 @@ package edu.cmu.cs214.booking.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import edu.cmu.cs214.booking.domain.Booking;
 import edu.cmu.cs214.booking.domain.Room;
 import edu.cmu.cs214.booking.domain.TimeInterval;
 import edu.cmu.cs214.booking.domain.User;
 import edu.cmu.cs214.booking.repo.InMemoryBookingStore;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class BookingServiceTest {
@@ -57,5 +59,20 @@ class BookingServiceTest {
         svc.book(roomA, alice, new TimeInterval(600, 660));
         svc.book(roomA, bob, new TimeInterval(660, 720));
         assertEquals(2, svc.listBookings(roomA).size());
+    }
+
+    @Test
+    void cancelBookingPromotesWaitlistedUserWhoseSlotIsNowFree() {
+        BookingService svc = newService();
+        BookingResult.Confirmed confirmed =
+            (BookingResult.Confirmed) svc.book(roomA, alice, new TimeInterval(600, 660));
+        svc.book(roomA, bob, new TimeInterval(630, 700));
+
+        svc.cancelBooking(confirmed.booking().id());
+
+        List<Booking> bookings = svc.listBookings(roomA);
+        assertEquals(1, bookings.size());
+        assertEquals(bob, bookings.get(0).user());
+        assertEquals(new TimeInterval(630, 700), bookings.get(0).interval());
     }
 }
